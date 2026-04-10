@@ -24,7 +24,7 @@ A real-time Computer Vision application that uses a custom YOLO model to ensure 
 
 1. **Clone the repository** (if applicable) or navigate to the project directory:
    ```bash
-   cd path/to/CV
+   git clone https://github.com/MANPREETS47/PPE-Detetction-Model.git
    ```
 
 2. **Install Required Libraries**:
