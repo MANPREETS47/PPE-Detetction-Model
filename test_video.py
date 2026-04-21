@@ -21,8 +21,11 @@ def main():
 
     # Tracking variables
     violation_count = 0
-    last_violation_time = 0
-    cooldown_seconds = 5 # Wait 5 seconds before logging another violation image
+    
+    # For video, we use frame-based cooldown instead of real-time
+    frame_count = 0
+    last_violation_frame = -9999
+    cooldown_seconds = 5 # Wait 5 seconds (in video time) before logging another violation image
 
     if len(sys.argv) < 2:
         print("Usage: python test_video.py <path_to_video.mp4>")
@@ -38,11 +41,18 @@ def main():
 
     print("Starting inference loop. Press 'q' to quit.")
     
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if not fps or fps == 0:
+        fps = 30.0 # fallback
+    cooldown_frames = int(fps * cooldown_seconds)
+
     while True:
         ret, frame = cap.read()
         if not ret:
             print("Video ended or failed to grab frame.")
             break
+            
+        frame_count += 1
 
         # Run inference
         results = model(frame, conf=0.5, verbose=False)
@@ -86,17 +96,15 @@ def main():
 
         # Handle violations
         if violation_triggered:
-            current_time = time.time()
-            
             # Format the alert message
             alert_text = f"ALERT: Missing {', '.join(missing_gears)}!"
             cv2.putText(annotated_frame, alert_text, (10, 50), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
             
-            # Save image and increment count if cooldown has passed
-            if current_time - last_violation_time > cooldown_seconds:
+            # Save image and increment count if cooldown (in video frames) has passed
+            if (frame_count - last_violation_frame) > cooldown_frames:
                 violation_count += 1
-                last_violation_time = current_time
+                last_violation_frame = frame_count
                 
                 # Save the image
                 timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
