@@ -2,8 +2,14 @@ import cv2
 import time
 import os
 import sys
+import threading
+import winsound
 from datetime import datetime
 from ultralytics import YOLO
+
+def play_alarm():
+    # Play a 2500Hz beep for 1 second
+    winsound.Beep(2500, 1000)
 
 def main():
     # Make sure violations directory exists
@@ -111,6 +117,9 @@ def main():
                 filename = f"violations/violation_{violation_count}_{timestamp_str}.jpg"
                 cv2.imwrite(filename, annotated_frame)
                 print(f"Violation recorded! Saved to {filename}")
+                
+                # Trigger the alarm in a separate thread to avoid blocking the video playback
+                threading.Thread(target=play_alarm, daemon=True).start()
 
         # Always draw the Total Violations Count on the screen
         cv2.putText(annotated_frame, f"Total Violations: {violation_count}", (10, 90), 
